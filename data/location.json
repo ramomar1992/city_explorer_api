@@ -3,12 +3,7 @@
     "licence": "https://locationiq.com/attribution",
     "osm_type": "relation",
     "osm_id": "237662",
-    "boundingbox": [
-        "47.802219",
-        "47.853569",
-        "-122.34211",
-        "-122.261618"
-    ],
+    "boundingbox": ["47.802219", "47.853569", "-122.34211", "-122.261618"],
     "lat": "47.8278656",
     "lon": "-122.3053932",
     "display_name": "Lynnwood, Snohomish County, Washington, USA",
