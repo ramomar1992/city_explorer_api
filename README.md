@@ -1,27 +1,21 @@
 # city_explorer_api
 
-**Author**: Your Name Goes Here
-**Version**: 1.0.0 (increment the patch/fix version number if you make more commits past your first submission)
+**Author**: Omar Ramadan
+**Version**: 1.0.3
 
 ## Overview
-<!-- Provide a high level overview of what this application is and why you are building it, beyond the fact that it's an assignment for this class. (i.e. What's your problem domain?) -->
-As a user of City Explorer, I want to enter the name of a location so that I can see data about the area of interest to me.
+
+This site is build to explore cities around the world. If you want to know where the location of the city you want to visit on an interactive map, educate yourself about the weather of a certain city at different times of the day and on any weekday, see nearby restaurants, and more about the movies showen in the city theaters.
 
 ## Getting Started
-<!-- What are the steps that a user must take in order to build this app on their own machine and get it running? -->
+
+This app is a simple API built using HTML, JavaScript and CSS. It is pubulated with data in form of json files.
 
 ## Architecture
-<!-- Provide a detailed description of the application design. What technologies (languages, libraries, etc) you're using, and any other relevant design information. -->
+
+The API uses Javascript as a server-side language built on Node.js. I used the Express.js library along with Cors to implement the node code and handle the server requests. The coding materials including ESlint and Markdownlint as linting directives. The app is licensed with MIT LICENSE.
 
 ## Change Log
-
-<!-- Use this area to document the iterative changes made to your application as each feature is successfully implemented. Use time stamps. Here's an examples:
-
-01-01-2001 4:59pm - Application now has a fully-functional express server, with a GET route for the location resource.
-
-## Credits and Collaborations
-<!-- Give credit (and a link) to other people or resources that helped you build this application. -->
--->
 
 Number and name of feature: #1. Repository Set Up
 
@@ -39,6 +33,16 @@ Estimate of time needed to complete: 1 hour
 
 Start time: 3:40
 
-Finish time: 3:35
+Finish time: 4:45
 
-Actual time needed to complete: 35 min
+Actual time needed to complete: 1:05 hour
+
+Number and name of feature: #3. Weather
+
+Estimate of time needed to complete: 40 min
+
+Start time: 4:50
+
+Finish time: 5:10
+
+Actual time needed to complete: 20min
