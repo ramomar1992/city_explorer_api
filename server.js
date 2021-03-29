@@ -51,6 +51,8 @@ function handleLocation(req, res) {
             citiesLocationData[query] = new LocationObj(query, data.body[0].display_name, data.body[0].lat, data.body[0].lon);
             //return the response
             res.send(citiesLocationData[query]);
+        }).catch(reason => {
+            console.log(reason);
         });
     } else {
         //return the response
@@ -73,6 +75,8 @@ function handleWeather(req, res) {
                 return obj;
             });
             res.send(citiesWeatherData[query]);
+        }).catch(reason => {
+            console.log(reason);
         });
     } else {
         res.send(citiesWeatherData[query]);
@@ -94,6 +98,8 @@ function handleParks(req, res) {
             // return the response
             citiesParksData[query] = obj;
             res.send(citiesParksData[query]);
+        }).catch(reason => {
+            console.log(reason);
         });
     } else {
         res.send(citiesParksData[query]);
