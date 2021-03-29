@@ -43,4 +43,4 @@ function handleWeather(req, res) {
 }
 
 // run the server
-app.listen(PORT, () => console.log("running server at port", PORT));
+app.listen(process.env.PORT || PORT, () => console.log("running server at port", PORT));
