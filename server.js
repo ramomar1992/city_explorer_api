@@ -96,8 +96,10 @@ function handleParks(req, res) {
             let obj = info.map(elem => new ParksObj(elem.fullName, Object.values(elem.addresses[0]).join(','), elem.entranceFees[0].cost, elem.description, elem.url));
             // return the response
             citiesParksData[query] = obj;
-            res.send(citiesParksData[query])
+            res.send(citiesParksData[query]);
         });
+    } else {
+        res.send(citiesParksData[query]);
     }
 }
 
