@@ -4,7 +4,6 @@ const PORT = process.env.PORT; // server port
 const express = require('express'); // importing express
 const cors = require('cors'); // importing cors
 const superagent = require('superagent'); // importing superagent package 
-const e = require("express");
 const app = express(); // initializing express and save it into variable
 app.use(cors()); // populate express with cors routs
 
@@ -38,8 +37,6 @@ class ParksObj {
         this.url = url;
     }
 }
-let lat = '';
-let lon = '';
 app.get('/location', handleLocation); //location route
 app.get('/weather', handleWeather); //weather route
 app.get('/parks', handleParks); //weather route
