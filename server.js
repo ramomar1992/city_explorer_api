@@ -18,22 +18,6 @@ client.query('select * from locations').then(data => {
     });
 });
 
-// Cashing weathers from sql
-let citiesWeatherData = {};
-// client.query('select * from weathers').then(data => {
-//     data.rows.forEach(elem => {
-//         citiesWeatherData[elem.search_query] = elem;
-//     });
-// });
-
-//Cashing parks from sql
-let citiesParksData = {};
-// client.query('select * from parks').then(data => {
-//     data.rows.forEach(elem => {
-//         citiesParksData[elem.search_query] = elem;
-//     });
-// });
-
 // constructor function for the location response
 class LocationObj {
     constructor(search_query, formatted_query, latitude, longitude) {
@@ -69,9 +53,9 @@ function handleLocation(req, res) {
     let query = req.query.city;
     //import data file from the api if nor exsists in the cash
     if (!citiesLocationData[query]) {
-        console.log('inside the if ');
         let SQL = 'INSERT INTO locations (search_query, formatted_query,latitude,longitude) VALUES($1, $2, $3, $4) RETURNING *';
-        superagent.get(`https://us1.locationiq.com/v1/search.php?key=${process.env.GEOCODE_API_KEY}&q=${query}&format=json`).then(data => {
+        let API = `https://us1.locationiq.com/v1/search.php?key=${process.env.GEOCODE_API_KEY}&q=${query}&format=json`;
+        superagent.get(API).then(data => {
             //constructing the location object
             let newLocation = new LocationObj(query,
                 data.body[0].display_name,
@@ -103,48 +87,63 @@ function handleWeather(req, res) {
     // The city queried from the user
     let query = req.query.search_query;
     // check if it is not already exist in the server local memory, fitch the API
-    if (!citiesWeatherData[query]) {
-        let SQL = 'CREATE TABLE IF NOT EXISTS weathers (search_query varchar(60) ,forecast varchar(265),time varchar(60) primary key)';
-        client.query(SQL).then(() => {
-            // if not there getting the data from the source
+    let SQL = 'INSERT INTO weathers (search_query,forecast ,time) VALUES($1, $2, $3) RETURNING *';
+
+    client.query('SELECT * FROM weathers WHERE search_query=$1', [query]).then(data => {
+        if (data.rowCount == 0) {
             superagent.get(`https://api.weatherbit.io/v2.0/forecast/daily?city=${query}&country=US&key=${process.env.WEATHER_API_KEY}`).then(data => {
                 // saving weather data inside the array
-                citiesWeatherData[query] = data.body.data.map(ent => {
-                    return new WeatherObj(ent.weather.description,
-                        ent.valid_date);
+                console.log(data.body.data);
+                data.body.data.forEach(ent => {
+                    client.query(SQL, [query,
+                        ent.weather.description,
+                        ent.valid_date
+                    ]);
                 });
-                res.send(citiesWeatherData[query]);
-            });
 
-        });
-    } else {
-        res.send(citiesWeatherData[query]);
-    }
-    // return the response
+                client.query('SELECT * FROM weathers WHERE search_query=$1', [query]).then(data => {
+                    res.send(data.rows);
+                });
+            });
+        } else {
+            res.send(data.rows);
+        }
+    });
 }
+// if not there getting the data from the source
+
+
+// return the response
+
 
 // implementing parks handler callback
 function handleParks(req, res) {
     // The city queried from the user
     let query = req.query.search_query;
-    //check if the data already exists or not
-    if (!citiesParksData[query]) {
-        // if not there get the data from the source
-        superagent.get(`https://developer.nps.gov/api/v1/parks?q=${query}&api_key=${process.env.PARKS_API_KEY}`).then(data => {
-            let info = data.body.data.slice(0, 10);
+    let SQL = 'INSERT INTO parks (search_query,name,address ,fee,description,url) VALUES($1, $2, $3, $4, $5,$6) RETURNING *';
 
-            let obj = info.map(elem => new ParksObj(elem.fullName,
-                Object.values(elem.addresses[0]).join(','),
-                elem.entranceFees[0].cost,
-                elem.description,
-                elem.url));
-            // return the response
-            citiesParksData[query] = obj;
-            res.send(citiesParksData[query]);
-        });
-    } else {
-        res.send(citiesParksData[query]);
-    }
+    //check if the data already exists or not
+    client.query('SELECT * FROM parks WHERE search_query=$1', [query]).then(data => {
+        if (data.rowCount == 0) {
+            superagent.get(`https://developer.nps.gov/api/v1/parks?q=${query}&api_key=${process.env.PARKS_API_KEY}`).then(data => { // saving weather data inside the array
+                data.body.data.forEach(ent => {
+                    client.query(SQL, [query,
+                        ent.fullName,
+                        Object.values(ent.addresses[0]).join(','),
+                        (ent.entranceFees[0]) ? ent.entranceFees[0].cost : 0.0,
+                        ent.description,
+                        ent.url
+                    ]);
+                });
+
+                client.query('SELECT * FROM parks WHERE search_query=$1', [query]).then(data => {
+                    res.send(data.rows);
+                });
+            });
+        } else {
+            res.send(data.rows);
+        }
+    });
 }
 
 // run the server afther the DB is loaded
