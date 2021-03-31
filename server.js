@@ -9,9 +9,6 @@ const app = express(); // initializing express and save it into variable
 app.use(cors()); // populate express with cors routs
 const client = new pg.Client({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
 }); // initialize the pg database with the url of the database
 client.on('error', err => console.log("PG PROBLEM!!!")); // handle DB errors
 
@@ -32,26 +29,14 @@ class LocationObj {
         this.longitude = longitude;
     }
 }
-//constructor function for the weather object
-class WeatherObj {
-    constructor(forecast, time) {
-        this.forecast = forecast;
-        this.time = time;
-    }
-}
-//constructor function for the parks object
-class ParksObj {
-    constructor(name, address, fee, description, url) {
-        this.name = name;
-        this.address = address;
-        this.fee = fee;
-        this.description = description;
-        this.url = url;
-    }
-}
+
 app.get('/location', handleLocation); //location route
 app.get('/weather', handleWeather); //weather route
 app.get('/parks', handleParks); //weather route
+app.get('/movies', handleMovies);
+app.get('/yelp', handleYelp);
+
+
 // implementing location handler
 function handleLocation(req, res) {
     // The city queried from the user
@@ -79,6 +64,8 @@ function handleLocation(req, res) {
                 res.send(newLocation);
             });
 
+        }).catch(er => {
+            console.log("Something Went Wrong");
         });
         // if the city name exsists in the cashed variable
     } else {
@@ -93,12 +80,12 @@ function handleWeather(req, res) {
     let query = req.query.search_query;
     // check if it is not already exist in the server local memory, fitch the API
     let SQL = 'INSERT INTO weathers (search_query,forecast ,time) VALUES($1, $2, $3) RETURNING *';
-
-    client.query('SELECT * FROM weathers WHERE search_query=$1', [query]).then(data => {
+    let SQL2 = 'SELECT * FROM weathers WHERE search_query=$1';
+    client.query(SQL2, [query]).then(data => {
         if (data.rowCount == 0) {
             superagent.get(`https://api.weatherbit.io/v2.0/forecast/daily?city=${query}&country=US&key=${process.env.WEATHER_API_KEY}`).then(data => {
                 // saving weather data inside the array
-                console.log(data.body.data);
+
                 data.body.data.forEach(ent => {
                     client.query(SQL, [query,
                         ent.weather.description,
@@ -106,9 +93,11 @@ function handleWeather(req, res) {
                     ]);
                 });
 
-                client.query('SELECT * FROM weathers WHERE search_query=$1', [query]).then(data => {
+                client.query(SQL2, [query]).then(data => {
                     res.send(data.rows);
                 });
+            }).catch(er => {
+                console.log("Something Went Wrong");
             });
         } else {
             res.send(data.rows);
@@ -131,7 +120,7 @@ function handleParks(req, res) {
     client.query('SELECT * FROM parks WHERE search_query=$1', [query]).then(data => {
         if (data.rowCount == 0) {
             superagent.get(`https://developer.nps.gov/api/v1/parks?q=${query}&api_key=${process.env.PARKS_API_KEY}`).then(data => { // saving weather data inside the array
-                data.body.data.forEach(ent => {
+                data.body.data.slice(0, 10).forEach(ent => {
                     client.query(SQL, [query,
                         ent.fullName,
                         Object.values(ent.addresses[0]).join(','),
@@ -144,13 +133,78 @@ function handleParks(req, res) {
                 client.query('SELECT * FROM parks WHERE search_query=$1', [query]).then(data => {
                     res.send(data.rows);
                 });
+            }).catch(er => {
+                console.log("Something Went Wrong");
             });
         } else {
-            res.send(data.rows);
+            res.send(data.rows.slice(0, 10));
         }
     });
 }
 
+function handleMovies(req, res) {
+    const query = req.query.search_query;
+    let SQL2 = 'INSERT INTO movies (search_query,title,overview ,average_votes,total_votes,image_url,popularity,released_on) VALUES($1, $2, $3, $4, $5,$6,$7,$8) RETURNING *';
+    let SQL = 'SELECT * FROM movies WHERE search_query=$1';
+    client.query(SQL, [query]).then(data => {
+        if (data.rowCount == 0) {
+            superagent.get(`https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&query=${query}`).then(data2 => {
+                data2.body.results.slice(0, 20).forEach(elem => {
+                    client.query(SQL2, [query,
+                        elem.title,
+                        elem.overview,
+                        elem.vote_average,
+                        elem.vote_count,
+                        `https://image.tmdb.org/t/p/w500${elem.poster_path}`,
+                        elem.popularity,
+                        elem.release_date
+                    ]);
+                });
+                client.query('SELECT * FROM movies WHERE search_query=$1', [query]).then(data => {
+                    res.send(data.rows);
+                });
+            }).catch(er => {
+                console.log("Something Went Wrong");
+            });
+        } else {
+            res.send(data.rows.slice(0, 20));
+        }
+    });
+}
+
+function handleYelp(req, res) {
+    let query = req.query.search_query;
+    let page = req.query.page;
+    console.log(req.query);
+    let SQL = 'INSERT INTO restaurents (search_query,name,image_url ,price,rating,url) VALUES($1, $2, $3, $4, $5,$6) RETURNING *';
+
+    //check if the data already exists or not
+    client.query('SELECT * FROM restaurents WHERE search_query=$1', [query]).then(data => {
+        if (data.rowCount == 0) {
+            superagent.get(`https://api.yelp.com/v3/businesses/search?location=${query}&limit=50`)
+                .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
+                .then(data2 => { // saving weather data inside the array
+                    data2.body.businesses.forEach(ent => {
+                        client.query(SQL, [query,
+                            ent.name,
+                            ent.image_url,
+                            ent.price,
+                            ent.rating,
+                            ent.url
+                        ]);
+                    });
+
+                    client.query(`SELECT * FROM restaurents WHERE search_query=$1 Limit ${5*page} `, [query]).then(data => {
+                        res.send(data.rows);
+                    });
+                }).catch(er => {
+                    console.log("Something Went Wrong");
+                });
+        } else {
+            res.send(data.rows.slice(((page - 1) * 5), 5 * page));
+        }
+    });
+}
 // run the server afther the DB is loaded
 client.connect().then(() => {
     console.log("connected");
