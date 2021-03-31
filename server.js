@@ -7,9 +7,7 @@ const pg = require('pg');
 const superagent = require('superagent'); // importing superagent package 
 const app = express(); // initializing express and save it into variable
 app.use(cors()); // populate express with cors routs
-const client = new pg.Client({
-    connectionString: process.env.DATABASE_URL,
-}); // initialize the pg database with the url of the database
+const client = new pg.Client(process.env.DATABASE_URL); // initialize the pg database with the url of the database
 client.on('error', err => console.log("PG PROBLEM!!!")); // handle DB errors
 
 // Cashing Locations from sql
