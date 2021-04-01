@@ -33,6 +33,17 @@ app.get('/weather', handleWeather); //weather route
 app.get('/parks', handleParks); //weather route
 app.get('/movies', handleMovies);
 app.get('/yelp', handleYelp);
+app.use('*', handle404);
+app.use(erroHandler);
+
+function handle404(request, response) {
+    response.status(404).send('No Api found! Try again.');
+}
+
+function erroHandler(err, request, response, next) {
+    response.status(500).send('Server Error! Please Try again later!!');
+}
+
 
 
 // implementing location handler
@@ -63,7 +74,8 @@ function handleLocation(req, res) {
             });
 
         }).catch(er => {
-            console.log("Something Went Wrong");
+            console.log(er);
+            res.status(500).send('Sometheng went wrong with LocationIQ API')
         });
         // if the city name exsists in the cashed variable
     } else {
@@ -95,7 +107,8 @@ function handleWeather(req, res) {
                     res.send(data.rows);
                 });
             }).catch(er => {
-                console.log("Something Went Wrong");
+                console.log(er);
+                res.status(500).send('Sometheng went wrong with Weather API')
             });
         } else {
             res.send(data.rows);
@@ -132,7 +145,8 @@ function handleParks(req, res) {
                     res.send(data.rows);
                 });
             }).catch(er => {
-                console.log("Something Went Wrong");
+                console.log(er);
+                res.status(500).send('Sometheng went wrong with Parks API')
             });
         } else {
             res.send(data.rows.slice(0, 10));
@@ -162,7 +176,8 @@ function handleMovies(req, res) {
                     res.send(data.rows);
                 });
             }).catch(er => {
-                console.log("Something Went Wrong");
+                console.log(er);
+                res.status(500).send('Sometheng went wrong with Movies API')
             });
         } else {
             res.send(data.rows.slice(0, 20));
@@ -196,7 +211,8 @@ function handleYelp(req, res) {
                         res.send(data.rows);
                     });
                 }).catch(er => {
-                    console.log("Something Went Wrong");
+                    console.log(er);
+                    res.status(500).send('Sometheng went wrong with Yelp API')
                 });
         } else {
             res.send(data.rows.slice(((page - 1) * 5), 5 * page));
